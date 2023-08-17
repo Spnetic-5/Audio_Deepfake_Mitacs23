@@ -1,4 +1,7 @@
-# data_processing.py
+"""
+@author: Saurabh.Powar
+"""
+
 import numpy as np
 from scipy.signal import hamming
 from srmrpy.hilbert import hilbert
@@ -7,6 +10,7 @@ from gammatone.fftweight import fft_gtgram
 from gammatone.filters import centre_freqs, make_erb_filters, erb_filterbank
 from srmrpy.segmentaxis import segment_axis
 import soundfile as sf
+from sklearn.metrics import roc_curve
 
 def calc_erbs(low_freq, fs, n_filters):
     ear_q = 9.26449 # Glasberg and Moore Parameters

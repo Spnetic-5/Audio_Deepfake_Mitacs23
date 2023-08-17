@@ -1,3 +1,7 @@
+"""
+@author: Saurabh.Powar
+"""
+
 from __future__ import division
 import numpy as np
 import pandas as pd
@@ -43,6 +47,20 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # Training
 def train(model, device, train_loader, criterion, optimizer, epoch):
+    """
+    Train the model for one epoch.
+
+    Args:
+        model (nn.Module): The model to be trained.
+        device (torch.device): The device to run the training on.
+        train_loader (DataLoader): DataLoader for training data.
+        criterion (nn.Module): Loss function.
+        optimizer (torch.optim.Optimizer): Optimizer for updating model parameters.
+        epoch (int): Current epoch number.
+
+    Returns:
+        tuple: Tuple containing average loss, accuracy, and equal error rate (EER) for the epoch.
+    """
     model.train()
     total_loss = 0.0
     total_correct = 0

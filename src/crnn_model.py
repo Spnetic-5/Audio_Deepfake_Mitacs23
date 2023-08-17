@@ -1,10 +1,26 @@
-# model.py
+"""
+@author: Saurabh.Powar
+"""
+
 import torch
 import torch.nn as nn
 import numpy as np
 
 class CRNN_Model(nn.Module):
+    """
+    Convolutional Recurrent Neural Network (CRNN) model for audio classification.
+    """
     def __init__(self, num_class:int, msr_size:tuple, rnn_hidden_size:int, dropout:float, tem_fac:list):
+        """
+        Initialize the CRNN_Model.
+
+        Args:
+            num_class (int): Number of output classes.
+            msr_size (tuple): Tuple containing the size of the input spectrogram (frequency bins, modulation bands).
+            rnn_hidden_size (int): Size of the hidden state of the RNN.
+            dropout (float): Dropout probability for regularization.
+            tem_fac (list): List of temporal down-sampling factors for each CNN block.
+        """
         super(CRNN_Model, self).__init__()
         self.num_class = num_class
         self.rnn_hidden_size = rnn_hidden_size
@@ -16,6 +32,7 @@ class CRNN_Model(nn.Module):
         self.tanh = nn.Tanh()
         self.tem_fac = tem_fac
         
+        # Define CNN blocks
         self.cnn1 = nn.Sequential(
             nn.Conv3d(1, 16, kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1)),
             nn.BatchNorm3d(16),
@@ -48,6 +65,7 @@ class CRNN_Model(nn.Module):
         
         # self.Att = CBAM_Att(channel=4)
         
+        # Fully connected layers
         self.fc1 = nn.Sequential(
             nn.Linear(20416, 128),
             nn.BatchNorm1d(128),
@@ -55,7 +73,7 @@ class CRNN_Model(nn.Module):
             self.dp
             )
         
-        # RNN
+        # RNN layer
         self.rnn1 = nn.GRU(input_size=128, 
                             hidden_size=self.rnn_hidden_size,
                             num_layers=3,
@@ -80,28 +98,47 @@ class CRNN_Model(nn.Module):
                 nn.init.kaiming_normal_(m.weight)
     
     def forward(self, x):
-        # Apply the CNN layers
-        # print(x.shape)
+        """
+        Forward pass of the CRNN_Model.
+
+        Args:
+            x (tensor): Input tensor of shape (batch_size, num_freq, num_mod, time_steps).
+
+        Returns:
+            tensor: Output tensor of shape (batch_size, num_class).
+        """
         x = x.unsqueeze(1) 
-        # print(x.shape)
+
         ot = self.CNNblock(x)
+
         # Flatten ot to have shape (batch_size, -1)
         ot = ot.view(ot.size(0), -1)
 
-        # print(ot.shape)
         # Pass through the first fully connected layer
         ot = self.fc1(ot)
-        # print(ot.shape)   
+
         # After the RNN layer, ot will have shape (batch_size, time_steps, rnn_hidden_size * 2)
         ot, _ = self.rnn1(ot)
-        # print("RNN", ot.shape)
-        
+
         ot = self.fc2(ot).squeeze(1).float()
+
         ot = torch.sigmoid(ot)
-        # print("After FC2", ot.shape, ot)
         
         return ot
 
 def initialize_model(num_class, msr_size, rnn_hidden_size, dropout, tem_fac):
+    """
+    Initialize the CRNN model with specified parameters.
+
+    Args:
+        num_class (int): Number of output classes.
+        msr_size (tuple): Tuple containing the size of the input spectrogram (frequency bins, modulation bands).
+        rnn_hidden_size (int): Size of the hidden state of the RNN.
+        dropout (float): Dropout probability for regularization.
+        tem_fac (list): List of temporal down-sampling factors for each CNN block.
+
+    Returns:
+        CRNN_Model: Initialized CRNN model.
+    """
     model = CRNN_Model(num_class, msr_size, rnn_hidden_size, dropout, tem_fac)
     return model
